@@ -92,41 +92,45 @@ func main() {
 		for _, record := range csv {
 			// jump over header
 			if record[0] == "hostname" {
+				if record[30] != "nameServers" {
+					log.Printf("record index 30 is %s", record[30])
+					log.Fatal("Index to CSV is broken")
+				}
 				continue
 			}
 
 			// compute host points
 			host := HostStat{Name: record[0]}
 			// nameServers
-			host.DNSpoints += str2points[record[31]]
+			host.DNSpoints += str2points[record[30]]
 			// dnssec
-			host.DNSpoints += str2points[record[32]]
+			host.DNSpoints += str2points[record[31]]
 			// emailTls
-			host.EMAILpoints += str2points[record[33]]
+			host.EMAILpoints += str2points[record[32]]
 			// emailDane
-			host.EMAILpoints += str2points[record[34]]
+			host.EMAILpoints += str2points[record[33]]
 			// spf
-			host.EMAILpoints += str2points[record[35]]
+			host.EMAILpoints += str2points[record[34]]
 			// dmarc
-			host.EMAILpoints += str2points[record[36]]
+			host.EMAILpoints += str2points[record[35]]
 			// wwwTls
-			host.WEBpoints += str2points[record[37]]
+			host.WEBpoints += str2points[record[36]]
 			// wwwDane
-			// host.WEBpoints += str2points[record[38]]
+			// host.WEBpoints += str2points[record[37]]
 			// hsts
-			// host.WEBpoints += str2points[record[39]]
+			// host.WEBpoints += str2points[record[38]]
 			// hpkp
-			// host.WEBpoints += str2points[record[40]]
+			// host.WEBpoints += str2points[record[39]]
 			// csp
-			host.WEBpoints += str2points[record[41]]
+			host.WEBpoints += str2points[record[40]]
 			// securityHeaders
-			host.WEBpoints += str2points[record[42]]
+			host.WEBpoints += str2points[record[41]]
 			// cookies
-			host.WEBpoints += str2points[record[43]]
+			host.WEBpoints += str2points[record[42]]
 			// mixedContent
-			host.WEBpoints += str2points[record[44]]
+			host.WEBpoints += str2points[record[43]]
 			// wwwXssProtection
-			host.WEBpoints += str2points[record[45]]
+			host.WEBpoints += str2points[record[44]]
 
 			// host TOTAL
 			host.TOTALpoints = host.DNSpoints + host.EMAILpoints + host.WEBpoints
@@ -144,6 +148,10 @@ func main() {
 	}
 
 	// compute rank groups
+	if config.Verbose {
+		log.Printf("Compute ranks for groups\n")
+	}
+
 	list := make([]entry, 0)
 	for _, group := range groupstats {
 		entry := entry{name: group.Name, points: float32(group.TOTALpoints) / float32(len(group.HostStats))}
@@ -163,15 +171,13 @@ func main() {
 			}
 		}
 	}
-	if config.Verbose {
-		fmt.Println("\n\nRANKED")
-		for n := range groupstats {
-			fmt.Printf("%2d %-25s %3d\n", n, groupstats[n].Name, groupstats[n].RANK)
-		}
-	}
 
 	// compute rank hosts
 	for g := range groupstats {
+		if config.Verbose {
+			log.Printf("Compute ranks for group %s\n", groupstats[g].Name)
+		}
+
 		hosts := make([]entry, 0)
 		for n := range groupstats[g].HostStats {
 			hosts = append(hosts, entry{name: groupstats[g].HostStats[n].Name, points: float32(groupstats[g].HostStats[n].TOTALpoints)})
@@ -188,12 +194,6 @@ func main() {
 				if groupstats[g].HostStats[m].Name == hosts[n].name {
 					groupstats[g].HostStats[m].RANK = n + 1
 				}
-			}
-		}
-		if config.Verbose {
-			fmt.Println("\n\nRANKED ", groupstats[g].Name)
-			for n := range groupstats[g].HostStats {
-				fmt.Printf("%2d %-25s %3d\n", n, groupstats[g].HostStats[n].Name, groupstats[g].HostStats[n].RANK)
 			}
 		}
 
