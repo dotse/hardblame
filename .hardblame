@@ -1,0 +1,7 @@
+hardenizeroot: https://api.hardenize.com/v1/org
+hardenizeuser: user
+hardenizepasswd: passwd
+verbose: false
+hardenizewebuser: webuser
+hardenizewebpasswd: webpasswd
+hardenizewebroot: https://hardenize.com

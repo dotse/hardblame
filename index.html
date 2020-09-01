@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+<style>
+a {
+  color: black;
+  text-decoration: underline;
+}
+
+/* visited link */
+a:visited {
+  color: green;
+}
+
+/* mouse over link */
+a:hover {
+  color: hotpink;
+}
+
+/* selected link */
+a:active {
+  color: blue;
+}
+</style>
+<script>
+function showGroup(group){
+	$('#overview').css('display','none');
+	$('#'+group).css('display', 'block');
+}
+
+function showOverview(group){
+	$('#overview').css('display','block');
+	$('#'+group).css('display', 'none');
+}
+
+function printBase(name,entries) {
+	var html = `
+		<div id="${name}">
+			<table id="${name}table">
+				<thead>
+					<tr>
+						<th>RANK</th>
+						<th>NAME</th>
+						<th>DNS</th>
+						<th>EMAIL</th>
+						<th>WEB</th>
+						<th>TOTAL</th>
+					</tr>
+				</thead>
+				<tbody>`;
+	for (let n in entries) {
+		html += "<tr>";
+		html += "<td>"+entries[n].rank+"</td>";
+		html += "<td><a onClick=\"showGroup('group"+n+"'); return false;\">"+entries[n].name+"</a></td>";
+		p1 = entries[n].dns/entries[n].hosts.length
+		p2 = entries[n].email/entries[n].hosts.length
+		p3 = entries[n].web/entries[n].hosts.length
+		p4 = entries[n].total/entries[n].hosts.length
+		html += "<td>"+p1.toFixed(2)+"</td>";
+		html += "<td>"+p2.toFixed(2)+"</td>";
+		html += "<td>"+p3.toFixed(2)+"</td>";
+		html += "<td>"+p4.toFixed(2)+"</td>";
+		html += "</tr>";
+	}
+	html += `	</tbody>
+			</table>
+		</div>`;
+	document.body.innerHTML = document.body.innerHTML + html;
+	$(document).ready( function () {
+			$('#'+name+'table').DataTable({ paging: false, searching: false, });
+	} );
+};
+function printGroup(name,entries,kategori) {
+	var html = `
+		<div id="${name}">
+			<a onClick="showOverview('${name}'); return false;">Back to Overview</a>
+			<h2>Kategori: ${kategori}</h2>
+			<table id="${name}table">
+				<thead>
+					<tr>
+						<th>RANK</th>
+						<th>NAME</th>
+						<th>DNS</th>
+						<th>EMAIL</th>
+						<th>WEB</th>
+						<th>TOTAL</th>
+					</tr>
+				</thead>
+				<tbody>`;
+	for (let n in entries) {
+		html += "<tr>";
+		html += "<td>"+entries[n].rank+"</td>";
+		html += "<td>"+entries[n].name+"</td>";
+		html += "<td>"+entries[n].dns+"</td>";
+		html += "<td>"+entries[n].email+"</td>";
+		html += "<td>"+entries[n].web+"</td>";
+		html += "<td>"+entries[n].total+"</td>";
+		html += "</tr>";
+	}
+	html += `	</tbody>
+			</table>
+		</div>`;
+	document.body.innerHTML = document.body.innerHTML + html;
+	$(document).ready( function () {
+			$('#'+name+'table').DataTable({ paging: false, searching: false, });
+	} );
+	showOverview(name);
+};
+</script>
+</head>
+<body>
+<h1>Hälsoläget</h1>
+<p>Genomsnittlig resultat per host i denna kategori</p>
+<p>DNS max 2 punkter, EMAIL max 4 punkter, WEB max 6 punkter, TOTAL max 12 punkter</p>
+
+
+<script>
+	let url =  document.URL + 'data-latest.json';
+    console.log(url)
+    fetch(url)
+    	.then(res => res.json())
+      	.then((data) => {
+			for (var rundate in data) {
+		  		printBase('overview', data[rundate])
+				for (let n in data[rundate]) {
+					printGroup('group'+n, data[rundate][n].hosts, data[rundate][n].name)
+				}
+				html = "<p><b>Listan sammanställdes den "+rundate+"</b></p>";
+				document.body.innerHTML += html;
+			}
+		})
+		.catch(err => { throw err });
+</script>
+</body>
+</html>
