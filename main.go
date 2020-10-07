@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"time"
+
+	"golang.org/x/net/idna"
 )
 
 const SECTION_SMTP = "smtp"
@@ -41,24 +43,17 @@ func main() {
 
 	var url string
 
-	str2points := map[string]int{
-		"good":    1,
-		"neutral": 0,
-		"warning": -1,
-		"error":   -2,
-	}
-
 	// Command line parameters
 	config := getConfig()
 
 	// login to web interface
-	if config.Verbose {
+	if config.Verbose > 0 {
 		log.Println("Login to web interface")
 	}
 	hardclient := GetHardenizeClient(config.HardenizeUser, config.HardenizePasswd, config.HardenizeWebUser, config.HardenizeWebPasswd)
 
 	// Get group list from hardenize
-	if config.Verbose {
+	if config.Verbose > 0 {
 		log.Println("Get Groups")
 	}
 
@@ -73,12 +68,12 @@ func main() {
 	groupstats := make([]GroupStat, 0)
 	for _, group := range groups.Groups {
 		if string(group.Name[0]) == "#" {
-			if config.Verbose {
+			if config.Verbose > 0 {
 				log.Printf("Skip group %s\n", group.Name)
 			}
 			continue
 		}
-		if config.Verbose {
+		if config.Verbose > 0 {
 			log.Printf("Process group %s\n", group.Name)
 		}
 
@@ -100,21 +95,28 @@ func main() {
 			}
 
 			// compute host points
+			if record[0][0:4] == "xn--" {
+				newr, err := idna.ToUnicode(record[0])
+				if err != nil {
+					panic(err)
+				}
+				record[0] = newr
+			}
 			host := HostStat{Name: record[0]}
 			// nameServers
-			host.DNSpoints += str2points[record[30]]
+			host.DNSpoints += str2points(config.NewData, record[30])
 			// dnssec
-			host.DNSpoints += str2points[record[31]]
+			host.DNSpoints += str2points(config.NewData, record[31])
 			// emailTls
-			host.EMAILpoints += str2points[record[32]]
+			host.EMAILpoints += str2points(config.NewData, record[32])
 			// emailDane
-			host.EMAILpoints += str2points[record[33]]
+			host.EMAILpoints += str2points(config.NewData, record[33])
 			// spf
-			host.EMAILpoints += str2points[record[34]]
+			host.EMAILpoints += str2points(config.NewData, record[34])
 			// dmarc
-			host.EMAILpoints += str2points[record[35]]
+			host.EMAILpoints += str2points(config.NewData, record[35])
 			// wwwTls
-			host.WEBpoints += str2points[record[36]]
+			host.WEBpoints += str2points(config.NewData, record[36])
 			// wwwDane
 			// host.WEBpoints += str2points[record[37]]
 			// hsts
@@ -122,15 +124,15 @@ func main() {
 			// hpkp
 			// host.WEBpoints += str2points[record[39]]
 			// csp
-			host.WEBpoints += str2points[record[40]]
+			host.WEBpoints += str2points(config.NewData, record[40])
 			// securityHeaders
-			host.WEBpoints += str2points[record[41]]
+			host.WEBpoints += str2points(config.NewData, record[41])
 			// cookies
-			host.WEBpoints += str2points[record[42]]
+			host.WEBpoints += str2points(config.NewData, record[42])
 			// mixedContent
-			host.WEBpoints += str2points[record[43]]
+			host.WEBpoints += str2points(config.NewData, record[43])
 			// wwwXssProtection
-			host.WEBpoints += str2points[record[44]]
+			host.WEBpoints += str2points(config.NewData, record[44])
 
 			// host TOTAL
 			host.TOTALpoints = host.DNSpoints + host.EMAILpoints + host.WEBpoints
@@ -148,7 +150,7 @@ func main() {
 	}
 
 	// compute rank groups
-	if config.Verbose {
+	if config.Verbose > 0 {
 		log.Printf("Compute ranks for groups\n")
 	}
 
@@ -174,7 +176,7 @@ func main() {
 
 	// compute rank hosts
 	for g := range groupstats {
-		if config.Verbose {
+		if config.Verbose > 0 {
 			log.Printf("Compute ranks for group %s\n", groupstats[g].Name)
 		}
 
@@ -198,44 +200,66 @@ func main() {
 		}
 
 	}
-	if !config.Dryrun {
 
-		today := fmt.Sprintf("%4d-%02d-%02d", time.Now().Year(), time.Now().Month(), time.Now().Day())
+	today := fmt.Sprintf("%4d-%02d-%02d", time.Now().Year(), time.Now().Month(), time.Now().Day())
 
-		if config.Verbose {
-			log.Printf("Marshal %s data to json\n", today)
-		}
-
-		data := map[string][]GroupStat{today: groupstats}
-
-		// compute data
-		b, err := json.Marshal(data)
-		if err != nil {
-			panic(err)
-		}
-
-		jsonfilename := fmt.Sprintf("data-%d-%02d-%02d.json", time.Now().Year(), time.Now().Month(), time.Now().Day())
-		if config.Verbose {
-			log.Printf("Write json file %s\n", jsonfilename)
-		}
-
-		f, err := os.Create(jsonfilename)
-		if err != nil {
-			panic(err)
-		}
-		defer f.Close()
-		n, err := f.Write(b)
-		if err != nil {
-			panic(err)
-		}
-		if n != len(b) {
-			panic(fmt.Errorf("Marshaled data is %d bytes, written only %d bytes", len(b), n))
-		}
-		f.Sync()
+	if config.Verbose > 0 {
+		log.Printf("Marshal %s data to json\n", today)
 	}
+
+	data := map[string][]GroupStat{today: groupstats}
+
+	// compute data
+	b, err := json.Marshal(data)
+	if err != nil {
+		panic(err)
+	}
+
+	jsonfilename := fmt.Sprintf("data-%d-%02d-%02d.json", time.Now().Year(), time.Now().Month(), time.Now().Day())
+	if config.NewData {
+		jsonfilename = fmt.Sprintf("new%s", jsonfilename)
+	}
+	if config.Verbose > 0 {
+		log.Printf("Write json file %s\n", jsonfilename)
+	}
+
+	f, err := os.Create(jsonfilename)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	n, err := f.Write(b)
+	if err != nil {
+		panic(err)
+	}
+	if n != len(b) {
+		panic(fmt.Errorf("Marshaled data is %d bytes, written only %d bytes", len(b), n))
+	}
+	f.Sync()
 
 	// done
-	if config.Verbose {
+	if config.Verbose > 0 {
 		log.Println("Done")
 	}
+}
+
+var data2points map[string]int = map[string]int{
+	"good":    1,
+	"neutral": 0,
+	"warning": -1,
+	"error":   -2,
+}
+
+var newdata2points map[string]int = map[string]int{
+	"good":    2,
+	"warning": 1,
+	"error":   0,
+	"neutral": 0,
+}
+
+func str2points(newdata bool, value string) int {
+	if newdata {
+		return newdata2points[value]
+	}
+	return data2points[value]
 }

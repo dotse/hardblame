@@ -1,19 +1,20 @@
 package main
 
 import (
-	"errors"
-	"flag"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/user"
 	"path"
+
+	"github.com/spf13/pflag"
 
 	yaml "gopkg.in/yaml.v2"
 )
 
 type Configuration struct {
-	Dryrun             bool
-	Verbose            bool
+	Verbose            int
+	NewData            bool
 	Organization       string
 	HardenizeRoot      string
 	HardenizeUser      string
@@ -28,17 +29,11 @@ func getConfig() *Configuration {
 	var conffilename string
 
 	// define and parse command line arguments
-	flag.StringVar(&conffilename, "conf", "", "Filename to read configuration from")
-	flag.BoolVar(&config.Dryrun, "dryrun", false, "Print results instead of writing to InfluxDB")
-	flag.BoolVar(&config.Verbose, "verbose", false, "print more information while running")
-	flag.StringVar(&config.Organization, "org", "", "Organisation ID")
-	flag.StringVar(&config.HardenizeRoot, "hardenizeRoot", "", "Hardenize API root url")
-	flag.StringVar(&config.HardenizeUser, "hardenizeUser", "", "Hardenize API user")
-	flag.StringVar(&config.HardenizePasswd, "hardenizePasswd", "", "Hardenize API password")
-	flag.StringVar(&config.HardenizeWebUser, "hardenizeWebUser", "", "Hardenize web user")
-	flag.StringVar(&config.HardenizeWebPasswd, "hardenizeWebPasswd", "", "Hardenize web password")
-	flag.StringVar(&config.HardenizeWebRoot, "hardenizeWebRoot", "", "Hardenize web root url")
-	flag.Parse()
+	pflag.StringVar(&conffilename, "conf", "", "Filename to read configuration from")
+	pflag.CountVarP(&config.Verbose, "verbose", "v", "print more information while running")
+	pflag.StringVar(&config.Organization, "org", "", "Organisation ID")
+	pflag.BoolVarP(&config.NewData, "newdata", "n", false, "Choose between old and new point calculation")
+	pflag.Parse()
 
 	var confFromFile *Configuration
 	if conffilename != "" {
@@ -62,6 +57,9 @@ func readConfigFile(filename string) (*Configuration, error) {
 	err = yaml.Unmarshal(source, config)
 	if err != nil {
 		return nil, err
+	}
+	if len(config.Organization) > 0 {
+		log.Fatal("Organisation can only be given at command line")
 	}
 	return config, nil
 }
@@ -96,8 +94,8 @@ func joinConfig(oldConf *Configuration, newConf *Configuration) (config *Configu
 
 	// we have two configs, join them
 	config = &Configuration{}
-	config.Dryrun = newConf.Dryrun
 	config.Verbose = newConf.Verbose
+	config.NewData = newConf.NewData
 	if newConf.Organization != "" {
 		config.Organization = newConf.Organization
 	} else {
@@ -140,27 +138,27 @@ func joinConfig(oldConf *Configuration, newConf *Configuration) (config *Configu
 
 func checkConfiguration(config *Configuration) *Configuration {
 	if len(config.Organization) == 0 {
-		panic(errors.New("Organization must be given."))
+		log.Fatal("Organization must be given.")
 	}
 
 	// Hardenize Config
 	if len(config.HardenizeRoot) == 0 {
-		panic(errors.New("Hardenize root url must be given."))
+		log.Fatal("Hardenize root url must be given.")
 	}
 	if len(config.HardenizeUser) == 0 {
-		panic(errors.New("Hardenize API user must be given."))
+		log.Fatal("Hardenize API user must be given.")
 	}
 	if len(config.HardenizePasswd) == 0 {
-		panic(errors.New("Hardenize API password must be given."))
+		log.Fatal("Hardenize API password must be given.")
 	}
 	if len(config.HardenizeWebUser) == 0 {
-		panic(errors.New("Hardenize web user must be given."))
+		log.Fatal("Hardenize web user must be given.")
 	}
 	if len(config.HardenizeWebPasswd) == 0 {
-		panic(errors.New("Hardenize web password must be given."))
+		log.Fatal("Hardenize web password must be given.")
 	}
 	if len(config.HardenizeWebRoot) == 0 {
-		panic(errors.New("Hardenize web root url must be given."))
+		log.Fatal("Hardenize web root url must be given.")
 	}
 
 	// Done

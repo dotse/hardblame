@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<style>
+th { text-align: left;}
+a {
+  color: black;
+  text-decoration: underline;
+}
+
+/* visited link */
+a:visited {
+  color: green;
+}
+
+/* mouse over link */
+a:hover {
+  color: hotpink;
+}
+
+/* selected link */
+a:active {
+  color: blue;
+}
+</style>
+<script>
+
+function printGroup(name,entries,category) {
+
+	var dns = {
+		y:[],
+		x:[],
+		name : 'DNS',
+		type: 'bar',
+		orientation: 'h',
+		marker:{
+			color: 'rgba(59,171,253,0.6)', // 3BABFD
+			width: 1
+		}
+	};
+
+	var email = {
+		y:[],
+		x:[],
+		name : 'EMAIL',
+		type: 'bar',
+		orientation: 'h',
+		marker:{
+			color: 'rgba(109,193,255,0.6)', // 6DC1FF
+			width: 1
+		}
+	};
+
+	var web = {
+		y:[],
+		x:[],
+		name : 'WEB',
+		type: 'bar',
+		orientation: 'h',
+		marker:{
+			color: 'rgba(178,221,255,0.6)', //B2DDFF
+			width: 1
+		}
+	};
+
+	var height = 200;
+
+	for (let n in entries) {
+
+		dns.y.push(entries[n].name);
+		dns.x.push(entries[n].dns);
+		web.y.push(entries[n].name);
+		web.x.push(entries[n].dns);
+		email.y.push(entries[n].name);
+		email.x.push(entries[n].dns);
+
+		height += 20;
+	}
+
+	var data = [dns,email,web];
+
+	var layout = {
+		title: category,
+		barmode: 'stack',
+		autosize: true,
+		height: height,
+		xaxis:{
+			range:[0,24],
+		},
+		yxaxis:{
+			type: 'category',
+			title: 'Domains',
+		},
+		margin:{l:250,}
+	};
+
+	var html = `<div id="${name}" style="height:${height}"><!-- Plotly chart will be drawn inside this DIV --></div>`;
+	document.body.innerHTML = document.body.innerHTML + html;
+	Plotly.newPlot(name, data, layout, {displayModeBar: false, responsive: false, staticPlot: true});
+};
+
+</script>
+</head>
+<body>
+<h1>Hälsoläget</h1>
+<p>Resultat per kategori</p>
+<p>DNS max 4 poäng, EMAIL max 8 poäng, WEB max 12 poäng</p>
+
+
+<script>
+	let url =  new URL('newdata-latest.json', document.URL);
+    console.log(url)
+    fetch(url)
+    	.then(res => res.json())
+      	.then((data) => {
+			for (var rundate in data) {
+				for (let n in data[rundate]) {
+					printGroup('group'+n, data[rundate][n].hosts, data[rundate][n].name)
+				}
+				html = "<p><b>Listan sammanställdes den "+rundate+"</b></p>";
+				document.body.innerHTML += html;
+			}
+		})
+		.catch(err => { throw err });
+</script>
+</body>
+</html>
