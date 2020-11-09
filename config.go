@@ -31,7 +31,7 @@ func getConfig() *Configuration {
 	// define and parse command line arguments
 	pflag.StringVar(&conffilename, "conf", "", "Filename to read configuration from")
 	pflag.CountVarP(&config.Verbose, "verbose", "v", "print more information while running")
-	pflag.StringVar(&config.Organization, "org", "", "Organisation ID")
+	pflag.StringVarP(&config.Organization, "org", "o", "", "Organisation ID")
 	pflag.BoolVarP(&config.NewData, "newdata", "n", false, "Choose between old and new point calculation")
 	pflag.Parse()
 
