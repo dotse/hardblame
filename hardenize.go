@@ -44,11 +44,12 @@ func GetHardenizeClient(apiuser, apipasswd, webuser, webpasswd string) *hardeniz
 	}
 	formdata := ParseLogin(html.NewTokenizer(resp.Body))
 	data := url.Values{}
-	data.Set("email", webuser)
-	data.Set("password", webpasswd)
 	for k, v := range formdata {
 		data.Set(k, v)
 	}
+	data.Set("email", webuser)
+	data.Set("password", webpasswd)
+	data.Set("submitButton", "Submit")
 	resp, err = client.PostForm("https://www.hardenize.com/account/signIn", data)
 	if err != nil {
 		log.Fatal(err)
@@ -101,7 +102,7 @@ func (hc *hardenizeclient) GetWebPage(url string) *html.Tokenizer {
 func (hc *hardenizeclient) GetCSV(url string) [][]string {
 	resp, err := hc.webclient.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Web client failed: %s", err)
 	}
 
 	if resp.StatusCode != 200 {
@@ -111,9 +112,8 @@ func (hc *hardenizeclient) GetCSV(url string) [][]string {
 	r := csv.NewReader(resp.Body)
 	records, err := r.ReadAll()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("CSV error: ", err)
 	}
-
 	return records
 }
 
