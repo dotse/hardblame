@@ -1,5 +1,7 @@
 # hardblame
-Use Hardenize.com for a blame and shame list
+Use Hardenize.com to compile a list of domains with security excellence.
+
+To see the results visit: [Hardblame](https://wisser.se/hardblame)
 
 ## Data source
 Hardblame uses data from the Hardenize dashboard [Sweden’s Hälsoläget](https://www.hardenize.com/dashboards/sweden-health-status/).
