@@ -120,10 +120,13 @@ function printGroup(name,entries,kategori) {
 <p>Genomsnittlig resultat per host i denna kategori</p>
 <p>DNS max 2 poäng, EMAIL max 4 poäng, WEB max 6 poäng, TOTAL max 12 poäng</p>
 
-
 <script>
-	let url =  document.URL + 'data-latest.json';
-    console.log(url)
+	var myurl = new URL(window.location.href);
+	var data = myurl.searchParams.get("data");
+	if (data==null||data.length==0){
+		data='data-latest.json';
+	}
+	let url =  new URL(data, document.URL);
     fetch(url)
     	.then(res => res.json())
       	.then((data) => {
