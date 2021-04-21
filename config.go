@@ -14,7 +14,6 @@ import (
 
 type Configuration struct {
 	Verbose            int
-	NewData            bool
 	Organization       string
 	HardenizeRoot      string
 	HardenizeUser      string
@@ -32,7 +31,6 @@ func getConfig() *Configuration {
 	pflag.StringVar(&conffilename, "conf", "", "Filename to read configuration from")
 	pflag.CountVarP(&config.Verbose, "verbose", "v", "print more information while running")
 	pflag.StringVarP(&config.Organization, "org", "o", "", "Organisation ID")
-	pflag.BoolVarP(&config.NewData, "newdata", "n", false, "Choose between old and new point calculation")
 	pflag.Parse()
 
 	var confFromFile *Configuration
@@ -95,7 +93,6 @@ func joinConfig(oldConf *Configuration, newConf *Configuration) (config *Configu
 	// we have two configs, join them
 	config = &Configuration{}
 	config.Verbose = newConf.Verbose
-	config.NewData = newConf.NewData
 	if newConf.Organization != "" {
 		config.Organization = newConf.Organization
 	} else {

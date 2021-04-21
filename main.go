@@ -104,19 +104,19 @@ func main() {
 			}
 			host := HostStat{Name: record[0]}
 			// nameServers
-			host.DNSpoints += str2points(config.NewData, record[30])
+			host.DNSpoints += str2points(record[30])
 			// dnssec
-			host.DNSpoints += str2points(config.NewData, record[31])
+			host.DNSpoints += str2points(record[31])
 			// emailTls
-			host.EMAILpoints += str2points(config.NewData, record[32])
+			host.EMAILpoints += str2points(record[32])
 			// emailDane
-			host.EMAILpoints += str2points(config.NewData, record[33])
+			host.EMAILpoints += str2points(record[33])
 			// spf
-			host.EMAILpoints += str2points(config.NewData, record[34])
+			host.EMAILpoints += str2points(record[34])
 			// dmarc
-			host.EMAILpoints += str2points(config.NewData, record[35])
+			host.EMAILpoints += str2points(record[35])
 			// wwwTls
-			host.WEBpoints += str2points(config.NewData, record[36])
+			host.WEBpoints += str2points(record[36])
 			// wwwDane
 			// host.WEBpoints += str2points[record[37]]
 			// hsts
@@ -124,15 +124,15 @@ func main() {
 			// hpkp
 			// host.WEBpoints += str2points[record[39]]
 			// csp
-			host.WEBpoints += str2points(config.NewData, record[40])
+			host.WEBpoints += str2points(record[40])
 			// securityHeaders
-			host.WEBpoints += str2points(config.NewData, record[41])
+			host.WEBpoints += str2points(record[41])
 			// cookies
-			host.WEBpoints += str2points(config.NewData, record[42])
+			host.WEBpoints += str2points(record[42])
 			// mixedContent
-			host.WEBpoints += str2points(config.NewData, record[43])
+			host.WEBpoints += str2points(record[43])
 			// wwwXssProtection
-			host.WEBpoints += str2points(config.NewData, record[44])
+			host.WEBpoints += str2points(record[44])
 
 			// host TOTAL
 			host.TOTALpoints = host.DNSpoints + host.EMAILpoints + host.WEBpoints
@@ -216,9 +216,6 @@ func main() {
 	}
 
 	jsonfilename := fmt.Sprintf("data-%d-%02d-%02d.json", time.Now().Year(), time.Now().Month(), time.Now().Day())
-	if config.NewData {
-		jsonfilename = fmt.Sprintf("new%s", jsonfilename)
-	}
 	if config.Verbose > 0 {
 		log.Printf("Write json file %s\n", jsonfilename)
 	}
@@ -250,16 +247,6 @@ var data2points map[string]int = map[string]int{
 	"error":   -2,
 }
 
-var newdata2points map[string]int = map[string]int{
-	"good":    2,
-	"warning": 1,
-	"error":   0,
-	"neutral": 0,
-}
-
-func str2points(newdata bool, value string) int {
-	if newdata {
-		return newdata2points[value]
-	}
+func str2points(value string) int {
 	return data2points[value]
 }
