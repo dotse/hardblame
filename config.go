@@ -15,6 +15,7 @@ import (
 type Configuration struct {
 	Verbose            int
 	Organization       string
+	Domain             string
 	HardenizeRoot      string
 	HardenizeUser      string
 	HardenizePasswd    string
@@ -31,6 +32,7 @@ func getConfig() *Configuration {
 	pflag.StringVar(&conffilename, "conf", "", "Filename to read configuration from")
 	pflag.CountVarP(&config.Verbose, "verbose", "v", "print more information while running")
 	pflag.StringVarP(&config.Organization, "org", "o", "", "Organisation ID")
+	pflag.StringVarP(&config.Domain, "domain", "d", "", "Domain to show detailed results")
 	pflag.Parse()
 
 	var confFromFile *Configuration
@@ -97,6 +99,11 @@ func joinConfig(oldConf *Configuration, newConf *Configuration) (config *Configu
 		config.Organization = newConf.Organization
 	} else {
 		config.Organization = oldConf.Organization
+	}
+	if newConf.Domain != "" {
+		config.Domain = newConf.Domain
+	} else {
+		config.Domain = oldConf.Domain
 	}
 	if newConf.HardenizeRoot != "" {
 		config.HardenizeRoot = newConf.HardenizeRoot

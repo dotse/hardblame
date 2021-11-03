@@ -103,39 +103,108 @@ func main() {
 				record[0] = newr
 			}
 			host := HostStat{Name: record[0]}
+
+			// we are just investigating one domain
+			if config.Domain != "" {
+				if config.Verbose > 1 {
+					log.Printf("Config.Domain: %s    Record[0]: %s    Host: %s\n", config.Domain, record[0], host.Name)
+				}
+				if config.Domain != record[0] && config.Domain != host.Name {
+					continue
+				}
+
+				// Domain found, print values
+				log.Println("Hälsoläget för ", config.Domain)
+			}
 			// nameServers
 			host.DNSpoints += str2points(record[30])
+			if config.Domain != "" {
+				log.Printf("%-20s%3d\n", "DNS", str2points(record[30]))
+			}
 			// dnssec
 			host.DNSpoints += str2points(record[31])
+			if config.Domain != "" {
+				log.Printf("%-20s%3d\n", "DNSSEC", str2points(record[31]))
+			}
 			// emailTls
 			host.EMAILpoints += str2points(record[32])
+			if config.Domain != "" {
+				log.Printf("%-20s%3d\n", "EMAIL TLS", str2points(record[32]))
+			}
 			// emailDane
 			host.EMAILpoints += str2points(record[33])
+			if config.Domain != "" {
+				log.Printf("%-20s%3d\n", "EMAIL DANE", str2points(record[33]))
+			}
 			// spf
 			host.EMAILpoints += str2points(record[34])
+			if config.Domain != "" {
+				log.Printf("%-20s%3d\n", "EMAIL SPF", str2points(record[34]))
+			}
 			// dmarc
 			host.EMAILpoints += str2points(record[35])
+			if config.Domain != "" {
+				log.Printf("%-20s%3d\n", "EMAIL DMARC", str2points(record[35]))
+			}
 			// wwwTls
 			host.WEBpoints += str2points(record[36])
+			if config.Domain != "" {
+				log.Printf("%-20s%3d\n", "WEB TLS", str2points(record[36]))
+			}
 			// wwwDane
 			// host.WEBpoints += str2points[record[37]]
+			// if config.Verbose==7 {
+			//	log.Printf("%-20s%3d\n","WEB DANE", str2points[record[37]))
+			// }
 			// hsts
 			// host.WEBpoints += str2points[record[38]]
+			// if config.Verbose==7 {
+			//	log.Printf("%-20s%3d\n","WEB HSTS", str2points[record[38]))
+			// }
 			// hpkp
 			// host.WEBpoints += str2points[record[39]]
+			// if config.Verbose==7 {
+			// 	log.Printf("%-20s%3d\n","WEB HPKP", str2points[record[39]))
+			// }
 			// csp
 			host.WEBpoints += str2points(record[40])
+			if config.Domain != "" {
+				log.Printf("%-20s%3d\n", "WEB CSP", str2points(record[40]))
+			}
 			// securityHeaders
 			host.WEBpoints += str2points(record[41])
+			if config.Domain != "" {
+				log.Printf("%-20s%3d\n", "WEB Security headers", str2points(record[41]))
+			}
 			// cookies
 			host.WEBpoints += str2points(record[42])
+			if config.Domain != "" {
+				log.Printf("%-20s%3d\n", "WEB Cookies", str2points(record[42]))
+			}
 			// mixedContent
 			host.WEBpoints += str2points(record[43])
+			if config.Domain != "" {
+				log.Printf("%-20s%3d\n", "WEB mixed content", str2points(record[43]))
+			}
 			// wwwXssProtection
 			host.WEBpoints += str2points(record[44])
+			if config.Domain != "" {
+				log.Printf("%-20s%3d\n", "WEB XSS", str2points(record[44]))
+			}
 
 			// host TOTAL
 			host.TOTALpoints = host.DNSpoints + host.EMAILpoints + host.WEBpoints
+			if config.Domain != "" {
+				log.Println("\n\n")
+				log.Printf("DNS :  %3d\n", host.DNSpoints)
+				log.Printf("EMAIL: %3d\n", host.EMAILpoints)
+				log.Printf("WEB:   %3d\n", host.WEBpoints)
+				log.Println("----------")
+				log.Printf("TOTAL: %3d\n", host.TOTALpoints)
+
+				// Done
+				os.Exit(0)
+			}
 
 			// now keep group stats
 			stat.DNSpoints += host.DNSpoints
@@ -147,6 +216,12 @@ func main() {
 
 		// store group stats
 		groupstats = append(groupstats, stat)
+	}
+
+	// Nothing to do if we just investigate one domain
+	if config.Domain != "" {
+		log.Printf("Domain %s not found.\n", config.Domain)
+		os.Exit(0)
 	}
 
 	// compute rank groups
