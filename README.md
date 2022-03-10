@@ -1,7 +1,7 @@
 # hardblame
 Use Hardenize.com to compile a list of domains with security excellence.
 
-To see the results visit: [Hardblame](https://wisser.se/hardblame)
+To see the results visit: [Hardblame](https://dotse.github.io/hardblame/)
 
 ## Data source
 Hardblame uses data from the Hardenize dashboard [Sweden’s Hälsoläget](https://www.hardenize.com/dashboards/sweden-health-status/).
