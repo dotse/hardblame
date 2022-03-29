@@ -14,7 +14,7 @@ Every measurement can have four outcomes:
 |Outcome|Points|
 |---|---|
 |good| 1 point|
-|neutral| 0 points]
+|neutral| 0 points|
 |warning|-1 point|
 |error|-2 points|
 
