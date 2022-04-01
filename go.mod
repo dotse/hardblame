@@ -1,4 +1,4 @@
-module github.com/ulrichwisser/hardblame
+module github.com/dotse/hardblame
 
 go 1.16
 

@@ -59,7 +59,11 @@ func GetHardenizeClient(apiuser, apipasswd, webuser, webpasswd string) *hardeniz
 	}
 
 	// Done
-	hc := hardenizeclient{apiuser: apiuser, apipasswd: apipasswd, webclient: client}
+	hc := hardenizeclient{
+		apiuser:	apiuser,
+		apipasswd:	apipasswd,
+		webclient:	client,
+	}
 	return &hc
 }
 
