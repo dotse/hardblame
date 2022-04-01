@@ -41,7 +41,8 @@ type entry struct {
 
 func main() {
 
-	var url string
+	var url, jsonurl string
+	basenametmpl := "data"
 
 	// Command line parameters
 	config := getConfig()
@@ -59,8 +60,9 @@ func main() {
 
 	url = fmt.Sprintf("%s/%s/%s", config.HardenizeRoot, config.Organization, "groups")
 	body := hardclient.GetAPIData(url)
+	err := WriteJsonInput("data/%s-%s.json", "groups", body)
 	var groups hgroups
-	err := json.Unmarshal(body, &groups)
+	err = json.Unmarshal(body, &groups)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -83,6 +85,12 @@ func main() {
 		// get CSV file
 		// example: https: //www.hardenize.com/org/sweden-health-status/hosts/statligtgdabolag?format=csv
 		url = fmt.Sprintf("%s/org/%s/hosts/%s?format=csv", config.HardenizeWebRoot, config.Organization, group.Id)
+		jsonurl = fmt.Sprintf("%s/org/%s/hosts/%s?format=json", config.HardenizeWebRoot, config.Organization, group.Id)
+		json := hardclient.GetAPIData(jsonurl)
+		err := WriteJsonInput(basenametmpl, group.Id, json)
+		if err != nil {
+		   log.Fatalf("Error writing json blob received from Hardenize: %v", err)
+		}
 		csv := hardclient.GetCSV(url)
 		for _, record := range csv {
 			// jump over header
