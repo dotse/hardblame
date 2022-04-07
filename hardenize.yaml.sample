@@ -1,0 +1,7 @@
+hardenize:
+   apiurl:	https://api.hardenize.com/v1/org
+   user:	nissetuta
+   passwd:	ultrasecret
+   weburl:	https://hardenize.com
+   webuser:	nisse@tuta.se
+   webpasswd:	littlesecret

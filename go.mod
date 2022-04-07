@@ -3,7 +3,9 @@ module github.com/dotse/hardblame
 go 1.16
 
 require (
+	github.com/go-playground/validator/v10 v10.10.1
 	github.com/spf13/pflag v1.0.5
-	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
+	github.com/spf13/viper v1.10.1
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 	gopkg.in/yaml.v2 v2.4.0
 )

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"golang.org/x/net/idna"
+	"github.com/spf13/viper"
 )
 
 const SECTION_SMTP = "smtp"
@@ -40,18 +41,37 @@ type entry struct {
 }
 
 func main() {
+        var conf Config
 
 	var url, jsonurl string
 	basenametmpl := "data"
 
 	// Command line parameters
-	config := getConfig()
+	// config := getConfig()
+
+	viper.SetConfigFile(DefaultCfgFile)
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatalf("Could not load config (%s)", err)
+	}
+
+	ValidateConfig(nil, DefaultCfgFile, false) // will terminate on error
+	viper.Unmarshal(&conf)
 
 	// login to web interface
-	if config.Verbose > 0 {
+	if conf.Log.Verbose == true {
 		log.Println("Login to web interface")
 	}
-	hardclient := GetHardenizeClient(config.HardenizeUser, config.HardenizePasswd, config.HardenizeWebUser, config.HardenizeWebPasswd)
+	h := conf.Hardenize
+	hardclient := GetHardenizeClient(h.APIUrl, h.Organisation, 
+					 h.User, h.Passwd, h.WebUser,
+					 h.WebPasswd)
+					 
+//					 config.HardenizeUser,
+//					 config.HardenizePasswd,
+//					 config.HardenizeWebUser,
+//					 config.HardenizeWebPasswd)
 
 	// Get group list from hardenize
 	if config.Verbose > 0 {
@@ -59,8 +79,9 @@ func main() {
 	}
 
 	url = fmt.Sprintf("%s/%s/%s", config.HardenizeRoot, config.Organization, "groups")
-	body := hardclient.GetAPIData(url)
-	err := WriteJsonInput("data/%s-%s.json", "groups", body)
+	// endpoint := fmt.Sprintf("%s", "groups")
+	body := hardclient.GetAPIData("groups")
+	err = WriteJsonInput("data/%s-%s.json", "groups", body)
 	var groups hgroups
 	err = json.Unmarshal(body, &groups)
 	if err != nil {
@@ -85,13 +106,17 @@ func main() {
 		// get CSV file
 		// example: https: //www.hardenize.com/org/sweden-health-status/hosts/statligtgdabolag?format=csv
 		url = fmt.Sprintf("%s/org/%s/hosts/%s?format=csv", config.HardenizeWebRoot, config.Organization, group.Id)
-		jsonurl = fmt.Sprintf("%s/org/%s/hosts/%s?format=json", config.HardenizeWebRoot, config.Organization, group.Id)
+		jsonurl = fmt.Sprintf("reports0?group=%s&format=json", group.Id)
 		json := hardclient.GetAPIData(jsonurl)
 		err := WriteJsonInput(basenametmpl, group.Id, json)
 		if err != nil {
 		   log.Fatalf("Error writing json blob received from Hardenize: %v", err)
 		}
 		csv := hardclient.GetCSV(url)
+		err = WriteCSVInput(basenametmpl, group.Id, csv)
+		if err != nil {
+		   log.Fatalf("Error writing json blob received from Hardenize: %v", err)
+		}
 		for _, record := range csv {
 			// jump over header
 			if record[0] == "hostname" {

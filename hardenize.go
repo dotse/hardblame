@@ -22,12 +22,15 @@ type hgroups struct {
 }
 
 type hardenizeclient struct {
-	apiuser   string
-	apipasswd string
-	webclient http.Client
+        baseurl	     	string
+	organisation	string
+	apiuser   	string
+	apipasswd 	string
+	webclient 	http.Client
 }
 
-func GetHardenizeClient(apiuser, apipasswd, webuser, webpasswd string) *hardenizeclient {
+func GetHardenizeClient(baseurl, org, apiuser, apipasswd, webuser,
+     				 webpasswd string) *hardenizeclient {
 	options := cookiejar.Options{}
 	jar, err := cookiejar.New(&options)
 	if err != nil {
@@ -60,6 +63,8 @@ func GetHardenizeClient(apiuser, apipasswd, webuser, webpasswd string) *hardeniz
 
 	// Done
 	hc := hardenizeclient{
+	        baseurl:	baseurl,
+		organisation:	org,
 		apiuser:	apiuser,
 		apipasswd:	apipasswd,
 		webclient:	client,
@@ -67,7 +72,9 @@ func GetHardenizeClient(apiuser, apipasswd, webuser, webpasswd string) *hardeniz
 	return &hc
 }
 
-func (hc *hardenizeclient) GetAPIData(url string) []byte {
+func (hc *hardenizeclient) GetAPIData(endpoint string) []byte {
+        url := fmt.Sprintf("%s/%s/%s", hc.baseurl, hc.organisation, endpoint)
+	fmt.Printf("GetAPIData: Using url: %s\n", url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		panic(err)

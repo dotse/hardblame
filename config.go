@@ -1,6 +1,8 @@
 package main
 
 import (
+        "errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -8,9 +10,30 @@ import (
 	"path"
 
 	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	"github.com/go-playground/validator/v10"
 
 	yaml "gopkg.in/yaml.v2"
 )
+
+type Config struct {
+     Hardenize	   HardConf
+     Log	   LogConf	   
+}
+
+type HardConf struct {
+     APIUrl   string `validate:"required,url"`
+     User     string `validate:"required"`
+     Passwd   string
+     WebUrl   string
+     WebUser  string
+     WebPasswd	string
+     Organisation	string
+}
+
+type LogConf struct {
+     Verbose bool
+}
 
 type Configuration struct {
 	Verbose            int
@@ -167,4 +190,45 @@ func checkConfiguration(config *Configuration) *Configuration {
 
 	// Done
 	return config
+}
+
+func ValidateConfig(v *viper.Viper, cfgfile string, safemode bool) error {
+	var config Config
+	var msg string
+
+	if safemode {
+		if v == nil {
+			return errors.New("ValidateConfig: cannot use safe mode with nil viper")
+		} else {
+			if err := v.Unmarshal(&config); err != nil {
+				msg = fmt.Sprintf("ValidateConfig: unable to unmarshal the config %v",
+					err)
+				return errors.New(msg)
+			}
+		}
+
+		validate := validator.New()
+		if err := validate.Struct(&config); err != nil {
+			msg = fmt.Sprintf("ValidateConfig: \"%s\" is missing required attributes:\n%v\n",
+				cfgfile, err)
+			return errors.New(msg)
+		}
+	} else {
+		if v == nil {
+			if err := viper.Unmarshal(&config); err != nil {
+				log.Fatalf("unable to unmarshal the config %v", err)
+			}
+		} else {
+			if err := v.Unmarshal(&config); err != nil {
+				log.Fatalf("unable to unmarshal the config %v", err)
+			}
+		}
+
+		validate := validator.New()
+		if err := validate.Struct(&config); err != nil {
+			log.Fatalf("Config \"%s\" is missing required attributes:\n%v\n", cfgfile, err)
+		}
+		// fmt.Printf("config: %v\n", config)
+	}
+	return nil
 }
