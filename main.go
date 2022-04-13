@@ -52,10 +52,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err, groupstats := FetchAllData(h, hardclient, groups)
+	err, groupstats, alldata := FetchAllData(h, hardclient, groups)
 	if err != nil {
 	   log.Fatalf("Error from FetchAllData: %v", err)
 	}
+
+	UpdateCounters(&groupstats, &alldata)
 
 	// Nothing to do if we just investigate one domain
 //	if config.Domain != "" {
@@ -154,19 +156,10 @@ func main() {
 	}
 }
 
-var data2points map[string]int = map[string]int{
-	"good":    1,
-	"neutral": 0,
-	"warning": -1,
-	"error":   -2,
-}
-
-func str2points(value string) int {
-	return data2points[value]
-}
-
 func FetchAllData(h HardConf, hardclient *hardenizeclient,
-     		    	      		 groups hgroups) (error, []GroupStat) {
+     		    	      		 groups hgroups) (error, []GroupStat,
+					 		 	 map[string]Group) {
+	log.Printf("Enter FetchAllData")
 	url := fmt.Sprintf("%s/%s/%s", h.APIUrl, h.Organisation, "groups")
 	basenametmpl := "data"
 
@@ -349,5 +342,5 @@ func FetchAllData(h HardConf, hardclient *hardenizeclient,
 		// store group stats
 		groupstats = append(groupstats, stat)
 	}
-	return nil, groupstats
+	return nil, groupstats, alldata
 }

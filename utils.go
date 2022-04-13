@@ -3,6 +3,7 @@ package main
 import (
         "fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -10,6 +11,17 @@ import (
 
 const datadir = "2006-01-02"
 const datafile = "15:04:05"
+
+var data2points map[string]int = map[string]int{
+	"good":    1,
+	"neutral": 0,
+	"warning": -1,
+	"error":   -2,
+}
+
+func str2points(value string) int {
+	return data2points[value]
+}
 
 func WriteJsonInput(filetmpl, group string, json []byte) error {
      day := time.Now().Format(datadir)
@@ -60,3 +72,27 @@ func WriteCSVInput(filetmpl, group string, csv [][]string) error {
 //         }
 //         fmt.Println(data.Hostname)
 // }
+
+func UpdateCounters(gs *[]GroupStat, ad *map[string]Group) {
+     log.Printf("Enter UpdateCounters")
+     
+     for k, v := range *ad {
+     	 stat := GroupStat{Name: k}
+     	 for _, h := range v.Hosts {
+     	     host := HostStat{Name: h.Hostname}
+	     host.EMAILpoints += str2points(h.EmailTls)
+	     host.EMAILpoints += str2points(h.EmailDane)
+	     host.EMAILpoints += str2points(h.Spf)
+	     host.EMAILpoints += str2points(h.Dmarc)
+	     fmt.Printf("Examining Group %s, host %s. Email points: %d\n",
+	     			   v.Name, h.Hostname, host.EMAILpoints)
+
+	     stat.DNSpoints += host.DNSpoints
+	     stat.EMAILpoints += host.EMAILpoints
+	     stat.WEBpoints += host.WEBpoints
+	     stat.TOTALpoints += host.TOTALpoints
+	     stat.HostStats = append(stat.HostStats, host)
+	 }
+	 fmt.Printf("Stats for group %s: Email points: %d\n", v.Name, stat.EMAILpoints)
+     }
+}

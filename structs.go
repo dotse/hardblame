@@ -14,6 +14,7 @@ type HostStat struct {
 	DNSpoints   int    `json:"dns"`
 	WEBpoints   int    `json:"web"`
 	EMAILpoints int    `json:"email"`
+	EMAILpoints2 int   `json:"email"`
 	TOTALpoints int    `json:"total"`
 	RANK        int    `json:"rank"`
 }
