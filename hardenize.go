@@ -12,23 +12,6 @@ import (
 	"golang.org/x/net/html"
 )
 
-type hgroup struct {
-	Id   string
-	Name string
-}
-
-type hgroups struct {
-	Groups []hgroup
-}
-
-type hardenizeclient struct {
-        baseurl	     	string
-	organisation	string
-	apiuser   	string
-	apipasswd 	string
-	webclient 	http.Client
-}
-
 func GetHardenizeClient(baseurl, org, apiuser, apipasswd, webuser,
      				 webpasswd string) *hardenizeclient {
 	options := cookiejar.Options{}

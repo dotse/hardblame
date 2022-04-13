@@ -39,3 +39,24 @@ func WriteCSVInput(filetmpl, group string, csv [][]string) error {
      return err
 }
 
+// for key, _ := range group.Hosts {
+//         if group.Hosts[key].Hostname[0:4] == "xn--" {
+//             newr, err := idna.ToUnicode(group.Hosts[key].Hostname)
+// 	    	if err != nil {
+//                 panic(err)
+//             }
+//             group.Hosts[key].Hostname = newr
+//         }
+//         fmt.Println(group.Hosts[key].Hostname)
+// }
+// 
+// for _, data := range group.Hosts {
+//         if data.Hostname[0:4] == "xn--" {
+//             newr, err := idna.ToUnicode(data.Hostname)
+// 	    	if err != nil {
+//                 panic(err)
+//             }
+//             data.Hostname = newr
+//         }
+//         fmt.Println(data.Hostname)
+// }

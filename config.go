@@ -16,37 +16,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type Config struct {
-     Hardenize	   HardConf
-     Log	   LogConf	   
-}
-
-type HardConf struct {
-     APIUrl   string `validate:"required,url"`
-     User     string `validate:"required"`
-     Passwd   string
-     WebUrl   string
-     WebUser  string
-     WebPasswd	string
-     Organisation	string
-}
-
-type LogConf struct {
-     Verbose bool
-}
-
-type Configuration struct {
-	Verbose            int
-	Organization       string
-	Domain             string
-	HardenizeRoot      string
-	HardenizeUser      string
-	HardenizePasswd    string
-	HardenizeWebUser   string
-	HardenizeWebPasswd string
-	HardenizeWebRoot   string
-}
-
 func getConfig() *Configuration {
 	var config Configuration
 	var conffilename string
