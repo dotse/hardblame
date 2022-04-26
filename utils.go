@@ -23,13 +23,41 @@ func str2points(value string) int {
 	return data2points[value]
 }
 
-func WriteJsonInput(filetmpl, group string, json []byte) error {
+func WriteJsonGroups(filetmpl, group string, json []byte) error {
      day := time.Now().Format(datadir)
      outdir := filetmpl + "/" + day
      os.Mkdir(outdir, 0755)
+     // data/2022-04-26/ispar-2022-04-26.json
      outfile := fmt.Sprintf("%s/%s/%s-%s.json", filetmpl, day, group,
      	     					time.Now().Format(datafile))
+     fmt.Printf("WriteJsonData: outfile='%s', day='%s', group='%s'\n", outfile, day, group)
      err := ioutil.WriteFile(outfile, json, 0644)
+     if err != nil {
+     	log.Fatalf("Error writing json blob received from Hardenize to file %s: %v", outfile, err)
+     }
+     
+     return err
+}
+
+func WriteJsonData(conf *Config, filetmpl, group string, jsondata []byte) error {
+     day := time.Now().Format(datadir)
+     outdir := filetmpl + "/" + day
+     os.Mkdir(outdir, 0755)
+     // data/2022-04-26/ispar-2022-04-26.json
+     outfile := fmt.Sprintf("%s/%s/%s-%s.json", filetmpl, day, group,
+     	     					time.Now().Format(datafile))
+     fmt.Printf("WriteJsonData: outfile='%s', day='%s', group='%s'\n", outfile, day, group)
+     err := ioutil.WriteFile(outfile, jsondata, 0644)
+     if err != nil {
+     	log.Fatalf("Error writing json blob received from Hardenize to file %s: %v", outfile, err)
+     }
+
+     err = conf.HardDB.AddGroupDay(group, day, string(jsondata))
+     if err != nil {
+     	log.Fatalf("Error writing json blob received from Hardenize to db: %v", err)
+     }
+     
+     
      return err
 }
 

@@ -27,6 +27,8 @@ func main() {
 	ValidateConfig(nil, DefaultCfgFile, false) // will terminate on error
 	viper.Unmarshal(&conf)
 
+	conf.HardDB = NewDB(viper.GetString("db.file"), false) // Don't drop status tables if they exist
+
 	verbose := viper.GetBool("log.verbose")
 	
 	// login to web interface
@@ -34,7 +36,7 @@ func main() {
 		log.Println("Login to web interface")
 	}
 	h := conf.Hardenize
-	hardclient := GetHardenizeClient(h.APIUrl, h.Organisation, 
+	conf.HClient = GetHardenizeClient(h.APIUrl, h.Organisation, 
 					 h.User, h.Passwd, h.WebUser,
 					 h.WebPasswd)
 					 
@@ -44,15 +46,15 @@ func main() {
 	}
 
 	// endpoint := fmt.Sprintf("%s", "groups")
-	body := hardclient.GetAPIData("groups")
-	err = WriteJsonInput("data/%s-%s.json", "groups", body)
+	body := conf.HClient.GetAPIData("groups")
+	err = WriteJsonGroups("data", "groups", body)
 	var groups hgroups
 	err = json.Unmarshal(body, &groups)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err, groupstats, alldata := FetchAllData(h, hardclient, groups)
+	err, groupstats, alldata := FetchAllData(&conf, groups)
 	if err != nil {
 	   log.Fatalf("Error from FetchAllData: %v", err)
 	}
@@ -67,7 +69,7 @@ func main() {
 
 	// compute rank groups
 	if verbose {
-		log.Printf("Compute ranks for groups\n")
+	   log.Printf("Compute ranks for groups\n")
 	}
 
 	list := make([]entry, 0)
@@ -156,10 +158,10 @@ func main() {
 	}
 }
 
-func FetchAllData(h HardConf, hardclient *hardenizeclient,
-     		    	      		 groups hgroups) (error, []GroupStat,
+func FetchAllData(conf *Config, groups hgroups) (error, []GroupStat,
 					 		 	 map[string]Group) {
 	log.Printf("Enter FetchAllData")
+	h := conf.Hardenize
 	url := fmt.Sprintf("%s/%s/%s", h.APIUrl, h.Organisation, "groups")
 	basenametmpl := "data"
 
@@ -189,8 +191,8 @@ func FetchAllData(h HardConf, hardclient *hardenizeclient,
 		      						   h.Organisation,
 								   group.Id)
 		jsonurl := fmt.Sprintf("reports0?group=%s&format=json", group.Id)
-		jsondata := hardclient.GetAPIData(jsonurl)
-		err := WriteJsonInput(basenametmpl, group.Id, jsondata)
+		jsondata := conf.HClient.GetAPIData(jsonurl)
+		err := WriteJsonData(conf, basenametmpl, group.Id, jsondata)
 		if err != nil {
 		   log.Fatalf("Error writing json blob received from Hardenize: %v", err)
 		}
@@ -204,7 +206,7 @@ func FetchAllData(h HardConf, hardclient *hardenizeclient,
 
 		// fmt.Printf("Our group struct: %v\n\n\n", jsongroup)		
 
-		csv := hardclient.GetCSV(url)
+		csv := conf.HClient.GetCSV(url)
 		err = WriteCSVInput(basenametmpl, group.Id, csv)
 		if err != nil {
 		   log.Fatalf("Error writing json blob received from Hardenize: %v", err)

@@ -1,8 +1,9 @@
 package main
 
 import (
-//	"encoding/json"
+        "database/sql"
 	"net/http"
+	"sync"
 )
 
 const SECTION_SMTP = "smtp"
@@ -35,9 +36,16 @@ type entry struct {
 	points float32
 }
 
+type HardDB struct {
+     mu	    sync.Mutex
+     db	    *sql.DB
+}
+
 type Config struct {
      Hardenize	   HardConf
-     Log	   LogConf	   
+     Log	   LogConf
+     HardDB	   *HardDB
+     HClient	   *hardenizeclient
 }
 
 type HardConf struct {
