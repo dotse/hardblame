@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/go-playground/validator/v10 v10.10.1
+	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/mattn/go-sqlite3 v1.14.12 // indirect
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1

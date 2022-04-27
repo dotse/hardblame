@@ -5,11 +5,25 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"golang.org/x/net/idna"
 	"github.com/spf13/viper"
 )
+
+func mainloop(conf *Config) {
+	exit := make(chan os.Signal, 1)
+	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
+
+	for {
+	    select {
+	    	   case <-exit:
+		   os.Exit(0)
+	    }
+	}     
+}
 
 func main() {
         var conf Config
@@ -30,7 +44,11 @@ func main() {
 	conf.HardDB = NewDB(viper.GetString("db.file"), false) // Don't drop status tables if they exist
 
 	verbose := viper.GetBool("log.verbose")
-	
+
+	go APIdispatcher(&conf)
+
+	mainloop(&conf)
+
 	// login to web interface
 	if conf.Log.Verbose == true {
 		log.Println("Login to web interface")

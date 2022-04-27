@@ -4,6 +4,7 @@ import (
         "database/sql"
 	"net/http"
 	"sync"
+	"time"
 )
 
 const SECTION_SMTP = "smtp"
@@ -143,4 +144,23 @@ type hardenizeclient struct {
 	webclient 	http.Client
 }
 
+type APIstatus struct {
+     Status    int
+     Message   string
+}
+
+type PingPost struct {
+	Message string
+	Pings   int
+	Fetches int
+	Updates int
+}
+
+type PingResponse struct {
+	Time    time.Time
+	Client  string
+	Message string
+	Pings   int
+	Pongs   int
+}
 
