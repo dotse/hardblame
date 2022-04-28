@@ -1,0 +1,5 @@
+sharkd:
+   baseurl:     https://127.0.0.1:8090/api/v1
+   apikey:      you-have-stolen-my-frotzblinger
+   authmethod: X-API-Key
+   rootCApem: ../etc/certs/RootCA.pem
