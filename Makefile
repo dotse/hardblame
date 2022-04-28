@@ -20,6 +20,7 @@ CERTDIR:=etc/certs
 all:
 	@if [ ! -e ${CERTDIR}/RootCA.crt ] ; then make certs; fi
 	$(MAKE) -C sharkd
+	$(MAKE) -C shark-cli
 
 # ${PROG}: build
 
