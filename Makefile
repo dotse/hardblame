@@ -13,6 +13,8 @@ GOOS ?= $(shell uname -s | tr A-Z a-z)
 # GO:=GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=1 go
 GO:=GOOS=$(GOOS) GOARCH=$(HOSTARCH) go
 
+CERTDIR:=etc/certs
+
 # default: ${PROG}
 
 ${PROG}: build
@@ -32,6 +34,14 @@ test:
 
 clean:
 	@rm -f $(PROG)
+
+certs:
+	mkdir -p "${CERTDIR}"
+	openssl req -x509 -nodes -new -sha256 -days 1024 -newkey rsa:2048 -keyout "${CERTDIR}/RootCA.key" -out "${CERTDIR}/RootCA.pem" -subj "/C=US/CN=HealthRoot-CA"
+	openssl x509 -outform pem -in "${CERTDIR}/RootCA.pem" -out "${CERTDIR}/RootCA.crt"
+	openssl req -new -nodes -newkey rsa:2048 -keyout "${CERTDIR}/localhost.key" -out "${CERTDIR}/localhost.csr" -subj "/C=SE/ST=Confusion/L=Lost/O=HealthCertificates/CN=localhost.local"
+	openssl x509 -req -sha256 -days 1024 -in "${CERTDIR}/localhost.csr" -CA "${CERTDIR}/RootCA.pem" -CAkey "${CERTDIR}/RootCA.key" -CAcreateserial -extfile domains.ext -out "${CERTDIR}/localhost.crt"
+
 
 .PHONY: build clean generate
 
