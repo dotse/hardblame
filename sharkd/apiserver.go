@@ -15,6 +15,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
+	"github.com/dotse/hardblame/lib"
 )
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +65,7 @@ func APIping(conf *Config) func(w http.ResponseWriter, r *http.Request) {
 		}
 
 		decoder := json.NewDecoder(r.Body)
-		var pp PingPost
+		var pp sharklib.PingPost
 		err := decoder.Decode(&pp)
 		if err != nil {
 			log.Println("APIping: error decoding ping post:", err)
@@ -73,12 +74,91 @@ func APIping(conf *Config) func(w http.ResponseWriter, r *http.Request) {
 		pongs += 1
 
 		host, _ := os.Hostname()
-		response := PingResponse{
+		response := sharklib.PingResponse{
 			Time:    time.Now(),
 			Client:  r.RemoteAddr,
-			Message: fmt.Sprintf("%spong from musicd @ %s", tls, host),
+			Message: fmt.Sprintf("%spong from sharkd @ %s", tls, host),
 			Pings:   pp.Pings + 1,
 			Pongs:   pongs}
+
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(response)
+		if err != nil {
+			log.Printf("Error from Encoder: %v\n", err)
+		}
+	}
+}
+
+func APIhardenize(conf *Config) func(w http.ResponseWriter, r *http.Request) {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		decoder := json.NewDecoder(r.Body)
+		var hp sharklib.HardenizePost
+		err := decoder.Decode(&hp)
+		if err != nil {
+			log.Println("APIhardenize: error decoding hardenize post:", err)
+		}
+
+		log.Printf("APIhardenize: received /hardenize %s command from %s.\n",
+					  hp.Command, r.RemoteAddr)
+		var msg string
+		
+		switch hp.Command {
+		case "fetch":
+		     err, msg = FetchAndProcess(conf)
+
+		default:
+		     err = fmt.Errorf("No such hardenize command: %s", hp.Command)
+		     msg = "Bummer"
+		}
+
+		response := sharklib.HardenizeResponse{
+			Time:    time.Now(),
+			Error:	 err,
+			Message: msg,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(response)
+		if err != nil {
+			log.Printf("Error from Encoder: %v\n", err)
+		}
+	}
+}
+
+func APIgroup(conf *Config) func(w http.ResponseWriter, r *http.Request) {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		decoder := json.NewDecoder(r.Body)
+		var gp sharklib.GroupPost
+		err := decoder.Decode(&gp)
+		if err != nil {
+			log.Println("APIgroup: error decoding group post:", err)
+		}
+
+		log.Printf("APIgroup: received /group %s command from %s.\n",
+					  gp.Command, r.RemoteAddr)
+		var msg string
+		var gc map[string]int
+		
+		switch gp.Command {
+		case "count":
+		     err, gc = conf.HardDB.GroupCount()
+		     msg = "Tjolahopp"
+
+		default:
+		     err = fmt.Errorf("No such hardenize command: %s", gp.Command)
+		     msg = "Bummer"
+		}
+
+		response := sharklib.GroupResponse{
+			Time:    time.Now(),
+			Counts:	 gc,
+			Error:	 err,
+			Message: msg,
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(response)
@@ -96,6 +176,8 @@ func SetupRouter(conf *Config) *mux.Router {
 	sr := r.PathPrefix("/api/v1").Headers("X-API-Key",
 		viper.GetString("apiserver.apikey")).Subrouter()
 	sr.HandleFunc("/ping", APIping(conf)).Methods("POST")
+	sr.HandleFunc("/hardenize", APIhardenize(conf)).Methods("POST")
+	sr.HandleFunc("/group", APIgroup(conf)).Methods("POST")
 
 	return r
 }

@@ -43,12 +43,13 @@ func main() {
 
 	conf.HardDB = NewDB(viper.GetString("db.file"), false) // Don't drop status tables if they exist
 
-	verbose := viper.GetBool("log.verbose")
-
 	go APIdispatcher(&conf)
 
 	mainloop(&conf)
+}
 
+func FetchAndProcess(conf *Config) (error, string) {
+	verbose := viper.GetBool("log.verbose")
 	// login to web interface
 	if conf.Log.Verbose == true {
 		log.Println("Login to web interface")
@@ -65,14 +66,14 @@ func main() {
 
 	// endpoint := fmt.Sprintf("%s", "groups")
 	body := conf.HClient.GetAPIData("groups")
-	err = WriteJsonGroups("data", "groups", body)
+	err := WriteJsonGroups(viper.GetString("hardenize.datadir"), "groups", body)
 	var groups hgroups
 	err = json.Unmarshal(body, &groups)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err, groupstats, alldata := FetchAllData(&conf, groups)
+	err, groupstats, alldata := FetchAllData(conf, groups)
 	if err != nil {
 	   log.Fatalf("Error from FetchAllData: %v", err)
 	}
@@ -166,7 +167,8 @@ func main() {
 		panic(err)
 	}
 	if n != len(b) {
-		panic(fmt.Errorf("Marshaled data is %d bytes, written only %d bytes", len(b), n))
+		// panic(fmt.Errorf("Marshaled data is %d bytes, written only %d bytes", len(b), n))
+		return fmt.Errorf("Marshaled data is %d bytes, written only %d bytes", len(b), n), "Kaboom. All is lost"
 	}
 	f.Sync()
 
@@ -174,6 +176,7 @@ func main() {
 	if verbose {
 		log.Println("Done")
 	}
+	return nil, "All ok"
 }
 
 func FetchAllData(conf *Config, groups hgroups) (error, []GroupStat,
@@ -181,7 +184,7 @@ func FetchAllData(conf *Config, groups hgroups) (error, []GroupStat,
 	log.Printf("Enter FetchAllData")
 	h := conf.Hardenize
 	url := fmt.Sprintf("%s/%s/%s", h.APIUrl, h.Organisation, "groups")
-	basenametmpl := "data"
+	basenametmpl := viper.GetString("hardenize.datadir")
 
 	verbose := viper.GetBool("log.verbose")
 	loglevel := viper.GetInt("log.level")
@@ -220,6 +223,19 @@ func FetchAllData(conf *Config, groups hgroups) (error, []GroupStat,
 		if err != nil {
 		   log.Fatalf("json.Unmarshal says kaboom: %v", err)
 		}
+
+		fmt.Printf("Looping over elements in group %s:\n", group.Id)
+		for _, dd := range jsongroup.Hosts {
+		    fmt.Printf("%s ", dd.Hostname)
+		    djson, err := json.Marshal(dd)
+		    if err != nil {
+		       log.Fatalf("json.Marshal says kaboom: %v", err)
+		    }
+		    
+		    WriteHardenizeDomainToDB(conf, group.Id, dd.Hostname, djson) 
+		}
+		fmt.Printf("\n")
+
 		alldata[group.Id] = jsongroup
 
 		// fmt.Printf("Our group struct: %v\n\n\n", jsongroup)		

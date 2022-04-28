@@ -1,0 +1,24 @@
+apiserver:
+   address:     127.0.0.1:8090
+   apikey:      you-me-and-bobby-macgee
+   certFile:    ../etc/certs/localhost.crt
+   keyFile:     ../etc/certs/localhost.key
+
+hardenize:
+   apiurl:	https://api.hardenize.com/v1/org
+   user:	nissetuta
+   passwd:	ultrasecret
+   weburl:	https://hardenize.com
+   webuser:	nisse@tuta.se
+   webpasswd:	littlesecret
+   datadir:	../data/
+
+engine:
+   Period:      24h
+
+db:
+   file:        /var/tmp/hard.db
+
+log:
+   verbose:     true
+   level:       3

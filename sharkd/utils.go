@@ -52,11 +52,16 @@ func WriteJsonData(conf *Config, filetmpl, group string, jsondata []byte) error 
      	log.Fatalf("Error writing json blob received from Hardenize to file %s: %v", outfile, err)
      }
 
-     err = conf.HardDB.AddGroupDay(group, day, string(jsondata))
+     return err
+}
+
+func WriteHardenizeDomainToDB(conf *Config, group, domain string, jsondata []byte) error {
+     fmt.Printf("WHDTDB: group: %s domain: %s\n", group, domain)
+     day := time.Now().Format(datadir)
+     err := conf.HardDB.AddGroupDomainDay(group, domain, day, string(jsondata))
      if err != nil {
      	log.Fatalf("Error writing json blob received from Hardenize to db: %v", err)
      }
-     
      
      return err
 }

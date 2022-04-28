@@ -149,14 +149,14 @@ type APIstatus struct {
      Message   string
 }
 
-type PingPost struct {
+type xxxPingPost struct {
 	Message string
 	Pings   int
 	Fetches int
 	Updates int
 }
 
-type PingResponse struct {
+type xxxPingResponse struct {
 	Time    time.Time
 	Client  string
 	Message string

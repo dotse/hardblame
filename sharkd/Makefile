@@ -1,5 +1,5 @@
-# PROG:=hardblame
-CONFIG:=hardblame.yaml
+PROG:=../sbin/sharkd
+CONFIG:=sharkd.yaml
 
 VERSION:=$(shell git describe --dirty=+WiP --always)
 GOFLAGS:=-v -ldflags "-X app.version=$(VERSION) -v"
@@ -13,25 +13,21 @@ GOOS ?= $(shell uname -s | tr A-Z a-z)
 # GO:=GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=1 go
 GO:=GOOS=$(GOOS) GOARCH=$(HOSTARCH) go
 
-CERTDIR:=etc/certs
+CERTDIR:=../etc/certs
 
 # default: ${PROG}
 
-all:
-	@if [ ! -e ${CERTDIR}/RootCA.crt ] ; then make certs; fi
-	$(MAKE) -C sharkd
+${PROG}: build
 
-# ${PROG}: build
-
-# build:	
-# 	$(GO) build $(GOFLAGS) -o ${PROG}
+build:	
+	$(GO) build $(GOFLAGS) -o ${PROG}
 
 arch:
 	@echo Host architecture: ${HOSTARCH} \(uname: ${UNAME}\)
 
 install: ${PROG}
 	@mkdir -p ./etc ./sbin ./data
-	if [ ! -e ./etc/${CONFIG} ] ; then install -c ${CONFIG}.sample ../etc/${CONFIG}; fi
+	if [ ! -e ../etc/${CONFIG} ] ; then install -c ${CONFIG}.sample ../etc/${CONFIG}; fi
 
 test:
 	$(GO) test -v -cover

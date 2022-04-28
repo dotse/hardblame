@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
+	
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -13,9 +15,10 @@ var DefaultTables = map[string]string{
 	"groups": `CREATE TABLE IF NOT EXISTS 'groups' (
 id        INTEGER PRIMARY KEY,
 hgroup    TEXT NOT NULL DEFAULT '',
+domain	  TEXT NOT NULL DEFAULT '',
 day       TEXT NOT NULL DEFAULT '',
 data      TEXT NOT NULL DEFAULT '',
-UNIQUE (hgroup, day)
+UNIQUE (hgroup, domain, day)
 )`,
 }
 
@@ -97,6 +100,62 @@ func (hdb *HardDB) AddGroupDay(group, day, data string) error {
 	return nil
 }
 
+const AGDDsql = `INSERT OR IGNORE INTO groups(hgroup, domain, day, data) VALUES (?, ?, ?, ?)`
+
+func (hdb *HardDB) AddGroupDomainDay(group, domain, day, data string) error {
+        fmt.Printf("AGDD: group: %s domain: %s day: %s\n", group, domain, day)
+	stmt, err := hdb.Prepare(AGDDsql)
+	if err != nil {
+		log.Printf("AddGroupDomainDay: Error in SQL prepare(%s): %v", AGDDsql, err)
+	}
+
+	hdb.mu.Lock()
+	_, err = stmt.Exec(group, domain, day, data)
+	if CheckSQLError("AddGroupDay", AGDDsql, err, false) {
+		hdb.mu.Unlock()
+		log.Printf("AddGroupDomainDay: Failed to insert new data for group %s, domain: %s, day %s: %v",
+					       group, domain, day, err)
+		return err
+	}
+	hdb.mu.Unlock()
+
+	return nil
+}
+
+const GCsql = "SELECT hgroup, COUNT(domain) AS total FROM groups WHERE day=? GROUP BY hgroup"
+
+func (hdb *HardDB) GroupCount() (error, map[string]int) {
+        gc := map[string]int{}
+
+	stmt, err := hdb.Prepare(GCsql)
+	if err != nil {
+		log.Printf("GroupCount: Error in SQL prepare(%s): %v", GCsql, err)
+	}
+	day := time.Now().Format(datadir)
+
+	hdb.mu.Lock()
+	rows, err := stmt.Query(day)
+	hdb.mu.Unlock()
+	defer rows.Close()
+	
+	if CheckSQLError("GroupCount", GCsql, err, false) {
+		log.Printf("GroupCount: Failed to retrieve group counts: %v", err)
+		return err, gc
+	} else {
+	       var group string
+	       var count int
+	       for rows.Next() {
+	       	   err := rows.Scan(&group, &count)
+		   if err != nil {
+		      return err, gc
+		   }
+	       	   gc[group] = count
+	       }
+	}
+
+	return nil, gc
+}
+
 func CheckSQLError(caller, sqlcmd string, err error, abort bool) bool {
 	if err != nil {
 		if abort {
@@ -109,3 +168,4 @@ func CheckSQLError(caller, sqlcmd string, err error, abort bool) bool {
 	}
 	return err != nil
 }
+
